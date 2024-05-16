@@ -1,14 +1,17 @@
 import discord
 import flag_checker
+import os
+from dotenv import load_dotenv
 
-def run_discord_bot():
-    DISCORD_TOKEN = 'MTI0MDczNTAyNjM2MzEwNTM3MA.G36MRk.JiXgmf_yNof1-ZwNnx0Z_LZ7DjMhQC7FWss8_c'
-    UNRECOGNIZED_CMD = '''Unrecognized command. Shame on you.
+UNRECOGNIZED_CMD = '''Unrecognized command. Shame on you.
 Try:
 `new("challenge name", "flag", points)`
 or
 `check("challenge name", "flag")`'''
 
+def run_discord_bot():
+    load_dotenv()
+    DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
     client_intents = discord.Intents(messages=True, message_content=True)
     client = discord.Client(intents=client_intents)
 
