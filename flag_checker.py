@@ -58,35 +58,24 @@ def new(chall_name: str,
     try:
         with open('credentials.json', 'r+') as f:
             file_json = json.load(f)
-            f.close()
     except FileNotFoundError:
-        with open('credentials.json', 'w+') as f:
-            creds_dict = {"credentials": []}
-            creds_json_object = json.dumps(creds_dict, indent=4)
-            f.write(creds_json_object)
-            f.seek(0)
-            file_json = json.load(f)
-            f.close()
-            
-    #if url not already in creds: need to add it
-    with open('credentials.json', 'r+') as f:
-        if urlparse(chall_url).netloc not in [cred['domain'] for cred in file_json['credentials']]:
-            if not cred_user or not cred_pass:
-                return 'No credentials found for this ctf plateform. You should provide a username and a password for ChadGPT as 4th and 5th arguments'
-            else:
-                cred = {
-                    "domain": urlparse(chall_url).netloc,
-                    "username": cred_user,
-                    "password": cred_pass
-                }
-                file_json = json.load(f)
-                file_json['credentials'].append(cred)
-                f.seek(0)
-                json.dump(file_json, f, indent=4)
-                f.close()
+        file_json = {"credentials": []}
+        with open('credentials.json', 'w') as f:
+            json.dump(file_json, f, indent=4)
+
+    if urlparse(chall_url).netloc not in [cred['domain'] for cred in file_json['credentials']]:
+        if not cred_user or not cred_pass:
+            return 'No credentials found for this CTF platform. You should provide a username and a password for ChadGPT as 4th and 5th arguments'
         else:
-            f.close()    
-            
+            cred = {
+                "domain": urlparse(chall_url).netloc,
+                "username": cred_user,
+                "password": cred_pass
+            }
+            file_json['credentials'].append(cred)
+            with open('credentials.json', 'w') as f:
+                json.dump(file_json, f, indent=4)
+
     chall = {
         'name': chall_name,
         'url': chall_url,
@@ -97,24 +86,16 @@ def new(chall_name: str,
     try:
         with open('./challenges.json', 'r+') as f:
             file_json = json.load(f)
-            f.close()
     except FileNotFoundError:
-        with open('./challenges.json', 'w+') as f:
-            chall_dict = {'challenges': []}
-            f.write(json.dumps(chall_dict, indent=4))
-            f.seek(0)
-            file_json = json.load(f)
-            f.close()
-
-    with open('./challenges.json', 'r+') as f:
-        challenge_names = [challenge['name'] for challenge in file_json['challenges']]
-        if chall['name'] not in challenge_names:
-            file_json['challenges'].append(chall)
-            f.seek(0)
+        file_json = {'challenges': []}
+        with open('./challenges.json', 'w') as f:
             json.dump(file_json, f, indent=4)
-            f.close()
-        else:
-            f.close()
-            return "A challenge with the same name already exists."
 
-    return "Successfully added \"{}\" challenge".format(chall.get('name'))
+    challenge_names = [challenge['name'] for challenge in file_json['challenges']]
+    if chall['name'] not in challenge_names:
+        file_json['challenges'].append(chall)
+        with open('./challenges.json', 'w') as f:
+            json.dump(file_json, f, indent=4)
+        return "Successfully added \"{}\" challenge".format(chall.get('name'))
+    else:
+        return "A challenge with the same name already exists."
