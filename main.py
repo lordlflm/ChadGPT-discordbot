@@ -38,7 +38,12 @@ def run_discord_bot():
     @bot.command()
     async def new(ctx, *args):
         try:
-            await ctx.send(flag_checker.new(args[0], args[1], args[2]))
+            if len(args) == 5:
+                await ctx.send(flag_checker.new(args[0], args[1], args[2], args[3], args[4]))
+            elif len(args) == 3:
+                await ctx.send(flag_checker.new(args[0], args[1], args[2]))
+            else:
+                raise IndexError
         except IndexError:
             #TODO wrong number of arguments
             print('wrong number of arguments')
