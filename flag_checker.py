@@ -1,12 +1,7 @@
 import json
-import requests
-import time
-from urllib.parse import urlparse, urljoin
+from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 from seleniumbase import SB
-
-import webdriver
-from selenium.webdriver.common.by import By
 
 def submit(chall_name: str, flag: str):
     try:
@@ -72,10 +67,6 @@ def submit(chall_name: str, flag: str):
         
         #TODO post request the flag and add it to challenges.json if true
         return "testing"
-
-
-
-
 
 def new(chall_name: str, 
         chall_url: str, 
