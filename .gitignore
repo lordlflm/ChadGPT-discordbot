@@ -3,3 +3,4 @@ __pycache__
 .env
 *.json
 downloaded_files
+*.png
