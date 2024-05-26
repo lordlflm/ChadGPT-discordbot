@@ -61,4 +61,5 @@ def run_discord_bot():
     bot.run(DISCORD_TOKEN)
 
 if __name__ == '__main__':
-    run_discord_bot()
+    # run_discord_bot()
+    flag_checker.submit('Stonks', 'SomeFlage')

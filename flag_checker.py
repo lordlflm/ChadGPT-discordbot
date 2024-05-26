@@ -3,6 +3,7 @@ import requests
 import time
 from urllib.parse import urlparse, urljoin
 from bs4 import BeautifulSoup
+from seleniumbase import SB
 
 import webdriver
 from selenium.webdriver.common.by import By
@@ -44,16 +45,54 @@ def submit(chall_name: str, flag: str):
         # (Use selenium to simulate browser)
         #
         # Selenium seems to be getting blocked by cloudfare
-        driver = webdriver.generate_webdriver()
-        driver.get(urljoin(chall_obj['url'], 'login'))
-        input_fields = driver.find_elements(By.TAG_NAME, 'input')
-        input_fields[0].send_keys(credential_object['username'])
-        input_fields[1].send_keys(credential_object['password'])
-        driver.find_element(By.TAG_NAME, 'button').click()
-        time.sleep(100)
+        # driver = webdriver.generate_webdriver()
+        # driver.get(urljoin(chall_obj['url'], 'login'))
+        # driver.get('https://play.picoctf.org/login')
+        # driver.sleep(4)
+        
+        # LOGIN
+        # 1. Scrape for input fields with bs4
+        # 2. Fill input fields
+        # 3. Search for submit button
+        # 4. click submit
+        
+        # if cloudfare problems
+        # 1. change browser
+        # 2. Try running selenium in docker
+        # 3. change user agent
+        
+        # input_fields = driver.find_elements(By.TAG_NAME, 'input')
+        # input_fields[0].send_keys(credential_object['username'])
+        # input_fields[1].send_keys(credential_object['password'])
+        # driver.find_element(By.TAG_NAME, 'button').click()
+        # driver.save_screenshot('./foto.png')
+        # print(driver.get_issue_message)
         
         
-        driver.quit()
+        with SB(uc=True, demo=True) as sb:
+            sb.driver.get('https://play.picoctf.org/login')
+            input_fields_name = []
+            submit_button_css_selector = ''
+            soup = BeautifulSoup(sb.get_page_source(), 'html.parser')
+            #TODO make sure the input fields are in the login form
+            for input_field in soup.find_all('input'):
+                input_fields_name.append(input_field.get('name'))
+                if input_field.get('type') == 'submit':
+                    submit_button_css_selector = 'input[type=\'submit\']'
+            sb.type(f'input[name=\'{input_fields_name[0]}\']', credential_object['username'])
+            sb.type(f'input[name=\'{input_fields_name[1]}\']', credential_object['password'])
+            try:
+                for button in soup.find_all('button'):
+                    if button.get('type') == 'submit':
+                        submit_button_css_selector = 'button[type=\'submit\']'
+            except:
+                pass
+            sb.click(f'{submit_button_css_selector}')
+            
+            sb.driver.save_screenshot('./foto1.png')
+            sb.sleep(100)
+            
+            
         return "testing"
         
         # for input in soup.find_all('input'):
