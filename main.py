@@ -9,31 +9,7 @@ def run_discord_bot():
     DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
     intents = discord.Intents.default()
     intents.message_content = True
-    #client = discord.Client(intents=client_intents)
     bot = commands.Bot(command_prefix='!', intents=intents)
-
-    # @client.event
-    # async def on_ready():
-    #     print("Bot running!")
-
-    # @client.event
-    # async def on_message(message):
-    #     if message.author == client.user:
-    #         return
-        
-    #     channel = str(message.channel)
-    #     content = str(message.content)
-
-    #     if 'Direct Message' in channel:
-    #         if content.startswith('check'):
-    #             await message.channel.send(flag_checker.check(content))
-    #         elif content.startswith('new'):
-    #             await message.channel.send(flag_checker.new(content))
-    #         else:
-    #             await message.channel.send(UNRECOGNIZED_CMD)
-    #     else:
-    #         #TODO block `m!play in certain channels`
-    #         pass
     
     @bot.command()
     async def new(ctx, *args):
@@ -61,5 +37,5 @@ def run_discord_bot():
     bot.run(DISCORD_TOKEN)
 
 if __name__ == '__main__':
-    # run_discord_bot()
-    flag_checker.submit('Stonks', 'SomeFlage')
+    run_discord_bot()
+    # flag_checker.submit('Stonks', 'SomeFlage')
