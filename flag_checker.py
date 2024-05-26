@@ -1,8 +1,11 @@
 import json
 import requests
-import re
-from urllib.parse import urlparse, urlunparse, urljoin
+import time
+from urllib.parse import urlparse, urljoin
 from bs4 import BeautifulSoup
+
+import webdriver
+from selenium.webdriver.common.by import By
 
 def submit(chall_name: str, flag: str):
     try:
@@ -23,7 +26,7 @@ def submit(chall_name: str, flag: str):
     if chall_obj['flag'] != "":
         # TODO compare flags
         print('flage found')
-        return "oops"
+        return "good"
     else:
         # TODO try except here FileNotFound
         with open('./credentials.json', 'r+') as f:
@@ -31,17 +34,41 @@ def submit(chall_name: str, flag: str):
             credential_object = next((credential for credential in creds_file_json['credentials'] if credential['domain'] == urlparse(chall_obj['url'])[1]), None)
             f.close()
     
-        session = requests.Session()
-        res = session.get(urljoin(chall_obj['url'], 'login'))
-        soup = BeautifulSoup(res.content, 'html.parser')
+        # session = requests.Session()
+        # res = session.get(urljoin(chall_obj['url'], 'login'))
+        # # soup = BeautifulSoup(res.content, 'html.parser')
         login_data = {}
-        for input in soup.find_all('input'):
-            value = input.get('value') if input.get('value') else ''
-            login_data.update({input.get('name'): value})
-        i = iter(login_data)
-        login_data[next(i)] = credential_object['username']
-        login_data[next(i)] = credential_object['password']
-        res = session.post(urljoin(chall_obj['url'], 'login'), data=login_data)
+        
+        
+        #TODO here soup might not be whats expected, need to interpret javascript in some cases 
+        # (Use selenium to simulate browser)
+        #
+        # Selenium seems to be getting blocked by cloudfare
+        driver = webdriver.generate_webdriver()
+        driver.get(urljoin(chall_obj['url'], 'login'))
+        input_fields = driver.find_elements(By.TAG_NAME, 'input')
+        input_fields[0].send_keys(credential_object['username'])
+        input_fields[1].send_keys(credential_object['password'])
+        driver.find_element(By.TAG_NAME, 'button').click()
+        time.sleep(100)
+        
+        
+        driver.quit()
+        return "testing"
+        
+        # for input in soup.find_all('input'):
+        #     value = input.get('value') if input.get('value') else ''
+        #     login_data.update({input.get('name'): value})
+        # i = iter(login_data)
+        # login_data[next(i)] = credential_object['username']
+        # login_data[next(i)] = credential_object['password']
+        # res = session.post(urljoin(chall_obj['url'], 'login'), data=login_data)
+        
+        
+        #TODO post request the flag and add it to challenges.json if true
+        # The following only works for picoCTF.org
+        print(urlparse(chall_obj['url']))
+        submission_data = {}
         
         
     return "hmm"
