@@ -11,6 +11,13 @@ def run_discord_bot():
     intents.message_content = True
     bot = commands.Bot(command_prefix='!', intents=intents)
     
+    @bot.listen()
+    async def on_message(message):
+        # TODO block some commands in certain channels
+        if message.author == bot.user:
+            return
+        print('msg')
+    
     @bot.command()
     async def new(ctx, *args):
         try:
@@ -38,4 +45,5 @@ def run_discord_bot():
 
 if __name__ == '__main__':
     run_discord_bot()
-    # flag_checker.submit('Stonks', 'SomeFlage')
+    #TODO testing
+    # flag_checker.submit('Stonks', 'picoCTF{s4n1ty_v3r1f13d_f28ac910}')

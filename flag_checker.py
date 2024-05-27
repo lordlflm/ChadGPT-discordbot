@@ -1,5 +1,5 @@
 import json
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
 from bs4 import BeautifulSoup
 from seleniumbase import SB
 
@@ -30,22 +30,15 @@ def submit(chall_name: str, flag: str):
             credential_object = next((credential for credential in creds_file_json['credentials'] if credential['domain'] == urlparse(chall_obj['url'])[1]), None)
             f.close()
         
-        # LOGIN
-        # 1. Scrape for input fields with bs4
-        # 2. Fill input fields
-        # 3. Search for submit button
-        # 4. click submit
-        
-        # if cloudfare problems
-        # 1. change browser
-        # 2. Try running selenium in docker
-        # 3. change user agent
-        
-        with SB(uc=True, demo=True) as sb:
-            sb.driver.get('https://play.picoctf.org/login')
+        with SB(uc=True, demo=True, headless=False) as sb:
+            #TODO testing
+            # sb.driver.get('https://play.picoctf.org/practice/challenge/105?category=6&page=1')
+            
+            sb.driver.get(urljoin(chall_obj['url'], 'login'))
             input_fields_name = []
             submit_button_css_selector = ''
             soup = BeautifulSoup(sb.get_page_source(), 'html.parser')
+            
             #TODO make sure the input fields are in the login form
             for input_field in soup.find_all('input'):
                 input_fields_name.append(input_field.get('name'))
@@ -53,19 +46,41 @@ def submit(chall_name: str, flag: str):
                     submit_button_css_selector = 'input[type=\'submit\']'
             sb.type(f'input[name=\'{input_fields_name[0]}\']', credential_object['username'])
             sb.type(f'input[name=\'{input_fields_name[1]}\']', credential_object['password'])
+            
             try:
                 for button in soup.find_all('button'):
                     if button.get('type') == 'submit':
                         submit_button_css_selector = 'button[type=\'submit\']'
             except:
                 pass
-            sb.click(f'{submit_button_css_selector}')
             
-            # TODO remove
-            sb.driver.save_screenshot('./foto1.png')
-            sb.sleep(100)
+            sb.click(f'{submit_button_css_selector}')
+            sb.driver.open(chall_obj['url'])
+            
+            soup = BeautifulSoup(sb.get_page_source(), 'html.parser')
+            for input_field in soup.find_all('input'):
+                if 'flag' in str(input_field.get('name')).lower() or 'flag' in str(input_field.get('placeholder')).lower():
+                    sb.type(f'input[name=\'{input_field.get("name")}\']', flag)
+                if input_field.get('type') == 'submit' and ('submit' in str(input_field.get('name')).lower() or 'submit' in str(input_field.text).lower()):
+                    submit_button_css_selector = f'//input[text()=\'{button.get_text()}\']'
+                if input_field.get('type') == 'button' and ('submit' in str(input_field.get('name')).lower() or 'submit' in str(input_field.text).lower()):
+                    submit_button_css_selector = f'//input[text()=\'{button.get_text()}\']'
+            
+            try:
+                for button in soup.find_all('button'):
+                    if 'submit' in str(button.get('name')).lower() or 'submit' in str(button.get_text()).lower():
+                        submit_button_css_selector = f'//button[text()=\'{button.get_text()}\']'
+            except:
+                pass
+            
+            sb.click(submit_button_css_selector)
+            # Problem with picoCTF is that flag have a random string at the end
+            if 'incorrect' in str(sb.get_page_source()).lower():
+                print('incorrect')
+            elif 'correct' in str(sb.get_page_source()).lower() and 'incorrect' not in str(sb.get_page_source()).lower():
+                print('correct')
+            sb.sleep(5)
         
-        #TODO post request the flag and add it to challenges.json if true
         return "testing"
 
 def new(chall_name: str, 
