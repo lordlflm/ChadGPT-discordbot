@@ -42,6 +42,3 @@ def prevent(msg: str, msg_channel: str) -> bool:
             return True
             
     return False
-            
-    
-    

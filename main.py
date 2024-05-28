@@ -16,9 +16,10 @@ def run_discord_bot():
     
     @bot.listen()
     async def on_message(message):
-        if message.author == bot.user:
+        if message.author == bot.user or str(message.channel.type) == 'private':
             return
         if (prevent_commands.prevent(message.content, message.channel.name)):
+            print(f"{message.author.name} sent restricted command {message.content} in {message.channel.name}")
             await message.delete()
             await message.channel.send('This command is forbidden in this channel')
         
@@ -27,13 +28,11 @@ def run_discord_bot():
         try:
             await ctx.send(prevent_commands.new_restricted_command(args[0], args[1:]))
         except IndexError:
-            #TODO wrong number of arguments
-            print('wrong number of arguments')
-            return
+            await ctx.send('Wrong number of arguments. Usage: `!restrict_command <restricted_command> <restricted_channel_1> ...`')
     
     @bot.command()
     async def new(ctx, *args):
-        if 'Direct Message' not in ctx.channel:
+        if 'private' != str(ctx.channel.type):
             return
         try:
             if len(args) == 5:
@@ -43,20 +42,17 @@ def run_discord_bot():
             else:
                 raise IndexError
         except IndexError:
-            #TODO wrong number of arguments
-            print('wrong number of arguments')
-            return
+            await ctx.send('Wrong number of arguments. Usage: `!new <challenge_name> <challenge_url> <challenge_value>`')
         
     @bot.command()
     async def submit(ctx, *args):
-        if 'Direct Message' not in ctx.channel:
+        if 'private' != str(ctx.channel.type):
             return
         try:
             await ctx.send(flag_checker.submit(args[0], args[1]))
         except IndexError:
-            #TODO wrong number of arguments
-            print('wrong number of arguments')
-            return
+            await ctx.send('Wrong number of arguments. Usage: `!submit <challenge_name> <flag>`')
+
             
     bot.run(DISCORD_TOKEN)
 
