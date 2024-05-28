@@ -1,8 +1,11 @@
+import flag_checker
+import prevent_commands
+
 import discord
 from discord.ext import commands
-import flag_checker
 import os
 from dotenv import load_dotenv
+
 
 def run_discord_bot():
     load_dotenv()
@@ -13,10 +16,20 @@ def run_discord_bot():
     
     @bot.listen()
     async def on_message(message):
-        # TODO block some commands in certain channels
         if message.author == bot.user:
             return
-        print('msg')
+        if (prevent_commands.prevent(message.content, message.channel.name)):
+            await message.delete()
+            await message.channel.send('This command is forbidden in this channel')
+        
+    @bot.command()
+    async def restrict_command(ctx, *args):
+        try:
+            await ctx.send(prevent_commands.new_restricted_command(args[0], args[1:]))
+        except IndexError:
+            #TODO wrong number of arguments
+            print('wrong number of arguments')
+            return
     
     @bot.command()
     async def new(ctx, *args):
