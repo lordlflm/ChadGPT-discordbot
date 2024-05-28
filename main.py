@@ -20,6 +20,8 @@ def run_discord_bot():
     
     @bot.command()
     async def new(ctx, *args):
+        if 'Direct Message' not in ctx.channel:
+            return
         try:
             if len(args) == 5:
                 await ctx.send(flag_checker.new(args[0], args[1], args[2], args[3], args[4]))
@@ -34,6 +36,8 @@ def run_discord_bot():
         
     @bot.command()
     async def submit(ctx, *args):
+        if 'Direct Message' not in ctx.channel:
+            return
         try:
             await ctx.send(flag_checker.submit(args[0], args[1]))
         except IndexError:
