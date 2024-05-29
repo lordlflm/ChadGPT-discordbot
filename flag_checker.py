@@ -6,38 +6,39 @@ from seleniumbase import SB
 def submit(chall_name: str, flag: str) -> str:
     try:
         with open('./challenges.json', 'r+') as f:
-            file_json = json.load(f)
+            challenges_json = json.load(f)
             f.close()
     except FileNotFoundError:
         return "Invalid challenge name"
 
-    chall_obj = next((challenge for challenge in file_json['challenges'] if challenge['name'] == chall_name), None)   
-    if not chall_obj:
+    challenge_object = next((challenge for challenge in challenges_json['challenges'] if challenge['name'] == chall_name), None)   
+    if not challenge_object:
         return "Invalid challenge name"
 
-    if chall_obj['flag'] != "":
-        
-        # TODO compare flags
-        print('flage found')
-        return "good"
+    if challenge_object['flag'] != "":
+        if challenge_object['flag'] == flag:
+            #TODO
+            # update leaderboard
+            # announce solve in designated channel (check for first bloods)
+            print(f"Valid submission for {chall_name}")
+            return f"Congratulation, you solved {chall_name}"
+        else:
+            print(f"Invalid submission for {chall_name}")
+            return f"Invalid submission for {chall_name}"
     
     else:
         with open('./credentials.json', 'r+') as f:
-            creds_file_json = json.load(f)
-            credential_object = next((credential for credential in creds_file_json['credentials'] if credential['domain'] == urlparse(chall_obj['url'])[1]), None)
+            credentials_json = json.load(f)
+            credential_object = next((credential for credential in credentials_json['credentials'] if credential['domain'] == urlparse(challenge_object['url'])[1]), None)
             f.close()
         
         try:
             with SB(uc=True, demo=True, headless=False) as sb:
-                #TODO testing
-                # sb.driver.get('https://play.picoctf.org/practice/challenge/105?category=6&page=1')
-                
-                sb.driver.get(urljoin(chall_obj['url'], 'login'))
+                sb.driver.get(urljoin(challenge_object['url'], 'login'))
                 input_fields_name = []
                 submit_button_css_selector = ''
                 soup = BeautifulSoup(sb.get_page_source(), 'html.parser')
                 
-                #TODO make sure the input fields are in the login form
                 for input_field in soup.find_all('input'):
                     input_fields_name.append(input_field.get('name'))
                     if input_field.get('type') == 'submit':
@@ -49,8 +50,8 @@ def submit(chall_name: str, flag: str) -> str:
                     if button.get('type') == 'submit':
                         submit_button_css_selector = 'button[type=\'submit\']'
                 
-                sb.click(f'{submit_button_css_selector}')
-                sb.uc_open_with_tab(chall_obj['url'])
+                sb.click(submit_button_css_selector)
+                sb.uc_open_with_tab(challenge_object['url'])
                 sb.sleep(2)
 
                 soup = BeautifulSoup(sb.get_page_source(), 'html.parser')
@@ -68,25 +69,33 @@ def submit(chall_name: str, flag: str) -> str:
                 
                 sb.click(submit_button_css_selector)
                 sb.sleep(2)
-                # Problem with picoCTF is that flag have a random string at the end
+                
+                # Problem with picoCTF is that flag have a random string at the end :(
                 if 'incorrect' in str(sb.get_page_source()).lower():
                     print(f"Invalid submission for {chall_name}")
                     return "Invalid submission, try again"
                 elif 'correct' in str(sb.get_page_source()).lower() and 'incorrect' not in str(sb.get_page_source()).lower():
-                    print(f"Valid submission for {chall_name}")
                     
-                    #TODO add flag to json file then return submit function
+                    #TODO test this before commit
+                    for i, challenge in enumerate(challenges_json['challenges']):
+                        if challenge['name'] == chall_name:
+                            challenge['flag'] = flag
+                            del(challenges_json['challenges'][i])
+                            challenges_json['challenges'].append(challenge)
+                            break
+                    with open('challenges.json', 'w+') as f:
+                        json.dump(challenges_json, f, indent=4)
                     
                     return submit(chall_name, flag)
         except Exception as e:
             print(f"Exception in flag_checker.submit(): {repr(e)}")
-            return "An error occured"
+            return "An internal error occured"
         finally:
             #should quit
             pass
         
-        print("Couldnt detect if the flag was correct or incorrect")
-        return "An error occured"
+        print("Couldn't detect if the flag was correct or incorrect")
+        return "An internal error occured"
 
 def new(chall_name: str, 
         chall_url: str, 
@@ -95,13 +104,13 @@ def new(chall_name: str,
         cred_pass: str = None) -> str:
     try:
         with open('credentials.json', 'r+') as f:
-            file_json = json.load(f)
+            credentials_json = json.load(f)
     except FileNotFoundError:
-        file_json = {"credentials": []}
+        credentials_json = {"credentials": []}
         with open('credentials.json', 'w') as f:
-            json.dump(file_json, f, indent=4)
+            json.dump(credentials_json, f, indent=4)
 
-    if urlparse(chall_url).netloc not in [cred['domain'] for cred in file_json['credentials']]:
+    if urlparse(chall_url).netloc not in [credential['domain'] for credential in credentials_json['credentials']]:
         if not cred_user or not cred_pass:
             return 'No credentials found for this CTF platform. You should provide a username and a password for ChadGPT as 4th and 5th arguments'
         else:
@@ -110,9 +119,9 @@ def new(chall_name: str,
                 "username": cred_user,
                 "password": cred_pass
             }
-            file_json['credentials'].append(cred)
+            credentials_json['credentials'].append(cred)
             with open('credentials.json', 'w') as f:
-                json.dump(file_json, f, indent=4)
+                json.dump(credentials_json, f, indent=4)
 
     chall = {
         'name': chall_name,
@@ -123,17 +132,17 @@ def new(chall_name: str,
 
     try:
         with open('./challenges.json', 'r+') as f:
-            file_json = json.load(f)
+            challenges_json = json.load(f)
     except FileNotFoundError:
-        file_json = {'challenges': []}
+        challenges_json = {'challenges': []}
         with open('./challenges.json', 'w') as f:
-            json.dump(file_json, f, indent=4)
+            json.dump(challenges_json, f, indent=4)
 
-    challenge_names = [challenge['name'] for challenge in file_json['challenges']]
+    challenge_names = [challenge['name'] for challenge in challenges_json['challenges']]
     if chall['name'] not in challenge_names:
-        file_json['challenges'].append(chall)
+        challenges_json['challenges'].append(chall)
         with open('./challenges.json', 'w') as f:
-            json.dump(file_json, f, indent=4)
+            json.dump(challenges_json, f, indent=4)
         return "Successfully added \"{}\" challenge".format(chall.get('name'))
     else:
         return "A challenge with the same name already exists."
