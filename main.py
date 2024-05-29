@@ -34,7 +34,9 @@ def run_discord_bot():
     @bot.command()
     async def new(ctx, *args):
         if 'private' != str(ctx.channel.type):
-            return
+            await ctx.message.delete()
+            #TODO logging
+            return 'This command must be called in a private channel'
         try:
             if len(args) == 5:
                 await ctx.send(flag_checker.new(args[0], args[1], args[2], args[3], args[4]))
@@ -48,7 +50,9 @@ def run_discord_bot():
     @bot.command()
     async def submit(ctx, *args):
         if 'private' != str(ctx.channel.type):
-            return
+            await ctx.message.delete()
+            #TODO logging
+            return 'This command must not be called in private channel'
         try:
             await ctx.send(flag_checker.submit(args[0], args[1]))
         except IndexError:
@@ -58,7 +62,7 @@ def run_discord_bot():
     async def set_ctf_channel(ctx, channel_name):
         if not ctx.guild:
             #TODO logging
-            await ctx.send('This command must not be called in private channel')
+            await ctx.send('This command must not be called in a private channel')
         else:
             await ctx.send(flag_checker.set_ctf_announcement(channel_name, ctx))
             

@@ -155,6 +155,7 @@ def set_ctf_announcement(channel_name: str, ctx: commands.Context) -> str:
         if isinstance(channel, discord.TextChannel):
             text_channels.append(channel.name)
     if channel_name not in text_channels:
+        #TODO logging
         return f"{channel_name} is not a valid text channel"
     
     try:
