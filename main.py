@@ -11,6 +11,7 @@ def run_discord_bot():
     load_dotenv()
     DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
     intents = discord.Intents.default()
+    intents.guilds = True
     intents.message_content = True
     bot = commands.Bot(command_prefix='!', intents=intents)
     
@@ -53,6 +54,13 @@ def run_discord_bot():
         except IndexError:
             await ctx.send('Wrong number of arguments. Usage: `!submit <challenge_name> <flag>`')
 
+    @bot.command()
+    async def set_ctf_channel(ctx, channel_name):
+        if not ctx.guild:
+            #TODO logging
+            await ctx.send('This command must not be called in private channel')
+        else:
+            await ctx.send(flag_checker.set_ctf_announcement(channel_name, ctx))
             
     bot.run(DISCORD_TOKEN)
 

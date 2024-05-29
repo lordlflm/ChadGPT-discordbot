@@ -1,4 +1,6 @@
 import json
+import discord
+from discord.ext import commands
 from urllib.parse import urlparse, urljoin
 from bs4 import BeautifulSoup
 from seleniumbase import SB
@@ -134,15 +136,41 @@ def new(chall_name: str,
         with open('./challenges.json', 'r+') as f:
             challenges_json = json.load(f)
     except FileNotFoundError:
-        challenges_json = {'challenges': []}
-        with open('./challenges.json', 'w') as f:
-            json.dump(challenges_json, f, indent=4)
+        challenges_json = init_challenges_json()
 
     challenge_names = [challenge['name'] for challenge in challenges_json['challenges']]
     if chall['name'] not in challenge_names:
         challenges_json['challenges'].append(chall)
         with open('./challenges.json', 'w') as f:
             json.dump(challenges_json, f, indent=4)
-        return "Successfully added \"{}\" challenge".format(chall.get('name'))
+        #TODO logging
+        return f"Successfully added '{chall.get('name')}' challenge"
     else:
+        #TODO logging
         return "A challenge with the same name already exists."
+    
+def set_ctf_announcement(channel_name: str, ctx: commands.Context) -> str:
+    text_channels = []
+    for channel in ctx.guild.channels:
+        if isinstance(channel, discord.TextChannel):
+            text_channels.append(channel.name)
+    if channel_name not in text_channels:
+        return f"{channel_name} is not a valid text channel"
+    
+    try:
+        with open('./challenges.json', 'r+') as f:
+            challenges_json = json.load(f)
+    except FileNotFoundError:
+        challenges_json = init_challenges_json()
+        
+    challenges_json['announcement_channel'] = channel_name
+    with open('./challenges.json', 'w') as f:
+        json.dump(challenges_json, f, indent=4)
+    #TODO logging
+    return f"Successfully set {channel_name} as ctf announcement channel"
+
+def init_challenges_json():
+    challenges_json = {'announcement_channel': '', 'challenges': []}
+    with open('./challenges.json', 'w') as f:
+        json.dump(challenges_json, f, indent=4)
+    return challenges_json
