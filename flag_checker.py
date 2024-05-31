@@ -5,7 +5,13 @@ from urllib.parse import urlparse, urljoin
 from bs4 import BeautifulSoup
 from seleniumbase import SB
 
-def submit(chall_name: str, flag: str) -> str:
+async def submit(args: list[str], guild: discord.Guild, ctx: commands.Context) -> str:
+    if len(args) != 2:
+        return 'Wrong number of arguments. Usage: `!submit <challenge_name> <flag>`'
+    
+    chall_name = args[0]
+    flag = args[1]
+    
     try:
         with open('./challenges.json', 'r+') as f:
             challenges_json = json.load(f)
@@ -21,7 +27,10 @@ def submit(chall_name: str, flag: str) -> str:
         if challenge_object['flag'] == flag:
             #TODO
             # update leaderboard
-            # announce solve in designated channel (check for first bloods)
+            for channel in guild.channels:
+                if channel.name == challenges_json['announcement_channel']:
+                    await channel.send(f"Congratulation {ctx.author.mention} for solving '{chall_name}!'")
+                    break
             print(f"Valid submission for {chall_name}")
             return f"Congratulation, you solved {chall_name}"
         else:
@@ -31,8 +40,9 @@ def submit(chall_name: str, flag: str) -> str:
     else:
         with open('./credentials.json', 'r+') as f:
             credentials_json = json.load(f)
-            credential_object = next((credential for credential in credentials_json['credentials'] if credential['domain'] == urlparse(challenge_object['url'])[1]), None)
             f.close()
+            
+        credential_object = next((credential for credential in credentials_json['credentials'] if credential['domain'] == urlparse(challenge_object['url'])[1]), None)
         
         try:
             with SB(uc=True, demo=True, headless=False) as sb:
@@ -99,11 +109,17 @@ def submit(chall_name: str, flag: str) -> str:
         print("Couldn't detect if the flag was correct or incorrect")
         return "An internal error occured"
 
-def new(chall_name: str, 
-        chall_url: str, 
-        chall_pts_str: str, 
-        cred_user: str = None, 
-        cred_pass: str = None) -> str:
+async def new(args: list[str], guild: discord.Guild, ctx: commands.Contex) -> str:
+    if len(args) != 3 and len(args) != 5:
+        return 'Wrong number of arguments. Usage: `!new <challenge_name> <challenge_url> <challenge_value>`'
+    
+    chall_name = args[0]
+    chall_url = args[1]
+    chall_pts_str = args[2]
+    if len(args) == 5:
+        cred_user = args[3]
+        cred_pass = args[4]
+        
     try:
         with open('credentials.json', 'r+') as f:
             credentials_json = json.load(f)
@@ -114,18 +130,19 @@ def new(chall_name: str,
 
     if urlparse(chall_url).netloc not in [credential['domain'] for credential in credentials_json['credentials']]:
         if not cred_user or not cred_pass:
+            #TODO logging
             return 'No credentials found for this CTF platform. You should provide a username and a password for ChadGPT as 4th and 5th arguments'
         else:
-            cred = {
+            credential_object = {
                 "domain": urlparse(chall_url).netloc,
                 "username": cred_user,
                 "password": cred_pass
             }
-            credentials_json['credentials'].append(cred)
+            credentials_json['credentials'].append(credential_object)
             with open('credentials.json', 'w') as f:
                 json.dump(credentials_json, f, indent=4)
 
-    chall = {
+    challenge_object = {
         'name': chall_name,
         'url': chall_url,
         'flag': '',
@@ -139,12 +156,16 @@ def new(chall_name: str,
         challenges_json = init_challenges_json()
 
     challenge_names = [challenge['name'] for challenge in challenges_json['challenges']]
-    if chall['name'] not in challenge_names:
-        challenges_json['challenges'].append(chall)
+    if challenge_object['name'] not in challenge_names:
+        challenges_json['challenges'].append(challenge_object)
         with open('./challenges.json', 'w') as f:
             json.dump(challenges_json, f, indent=4)
+        for channel in guild.channels:
+            if channel.name == challenges_json['announcement_channel']:
+                await channel.send(f"New challenge available!\n'{chall_name}' for {chall_pts_str} points at {chall_url}\nGood hacking!")
+                break
         #TODO logging
-        return f"Successfully added '{chall.get('name')}' challenge"
+        return f"Successfully added '{challenge_object.get('name')}' challenge"
     else:
         #TODO logging
         return "A challenge with the same name already exists."

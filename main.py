@@ -1,11 +1,12 @@
-import flag_checker
-import prevent_commands
-
 import discord
 from discord.ext import commands
 import os
 from dotenv import load_dotenv
 
+import flag_checker
+import prevent_commands
+
+guild_id = 0
 
 def run_discord_bot():
     load_dotenv()
@@ -37,15 +38,7 @@ def run_discord_bot():
             await ctx.message.delete()
             #TODO logging
             return 'This command must be called in a private channel'
-        try:
-            if len(args) == 5:
-                await ctx.send(flag_checker.new(args[0], args[1], args[2], args[3], args[4]))
-            elif len(args) == 3:
-                await ctx.send(flag_checker.new(args[0], args[1], args[2]))
-            else:
-                raise IndexError
-        except IndexError:
-            await ctx.send('Wrong number of arguments. Usage: `!new <challenge_name> <challenge_url> <challenge_value>`')
+        await ctx.send(await flag_checker.new(args, bot.guilds[0], ctx))
         
     @bot.command()
     async def submit(ctx, *args):
@@ -53,10 +46,8 @@ def run_discord_bot():
             await ctx.message.delete()
             #TODO logging
             return 'This command must not be called in private channel'
-        try:
-            await ctx.send(flag_checker.submit(args[0], args[1]))
-        except IndexError:
-            await ctx.send('Wrong number of arguments. Usage: `!submit <challenge_name> <flag>`')
+        
+        await ctx.send(await flag_checker.submit(args, bot.guilds[0], ctx))
 
     @bot.command()
     async def set_ctf_channel(ctx, channel_name):
@@ -70,5 +61,3 @@ def run_discord_bot():
 
 if __name__ == '__main__':
     run_discord_bot()
-    #TODO testing
-    # flag_checker.submit('Stonks', 'picoCTF{s4n1ty_v3r1f13d_f28ac910}')
