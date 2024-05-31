@@ -1,13 +1,15 @@
 import json
 
 def init_challenges():
-    #TODO check if file already exists
-    challenges_json = {'announcement_channel': '', 'challenges': []}
-    with open('./challenges.json', 'w') as f:
-        json.dump(challenges_json, f, indent=4)
+    try:
+        open('challenges.json').close()
+    except FileNotFoundError:
+        challenges_json = {'announcement_channel': '', 'challenges': []}
+        with open('challenges.json', 'w') as f:
+            json.dump(challenges_json, f, indent=4)
 
 def read_challenges():
-    with open('./challenges.json', 'r+') as f:
+    with open('challenges.json', 'r+') as f:
         challenges_json = json.load(f)
     return challenges_json
 
@@ -23,13 +25,13 @@ def get_challenges_announcement_channel():
 def update_challenges_announcement_channel(channel_name: str):
     challenges_json = read_challenges()
     challenges_json['announcement_channel'] = channel_name
-    with open('./challenges.json', 'w') as f:
+    with open('challenges.json', 'w') as f:
         json.dump(challenges_json, f, indent=4)
 
 def append_challenges(challenge_object):
     challenges_json = read_challenges()
     challenges_json['challenges'].append(challenge_object)
-    with open('./challenges.json', 'w') as f:
+    with open('challenges.json', 'w') as f:
         json.dump(challenges_json, f, indent=4)
 
 def update_challenge_flag_by_name(chall_name: str, flag: str):
@@ -44,10 +46,16 @@ def update_challenge_flag_by_name(chall_name: str, flag: str):
         json.dump(challenges_json, f, indent=4)
 
 def init_credentials():
-    #TODO check if file already exists
-    credentials_json = {"credentials": []}
-    with open('credentials.json', 'w') as f:
-        json.dump(credentials_json, f, indent=4)
+    try:
+        open('credentials.json').close()
+    except FileNotFoundError:
+        credentials_json = {"credentials": []}
+        with open('credentials.json', 'w') as f:
+            json.dump(credentials_json, f, indent=4)
+
+def get_credential_by_domain(domain_name: str):
+    credentials_json = read_credentials()        
+    return next((credential for credential in credentials_json['credentials'] if credential['domain'] == domain_name), None)
 
 def read_credentials():
     with open('credentials.json', 'r+') as f:

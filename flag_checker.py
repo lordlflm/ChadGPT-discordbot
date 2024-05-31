@@ -28,81 +28,72 @@ async def submit(args: list[str], guild: discord.Guild, ctx: commands.Context) -
                     await channel.send(f"Congratulation {ctx.author.mention} for solving '{chall_name}!'")
                     break
             print(f"Valid submission for {chall_name}")
-            return f"Congratulation, you solved {chall_name}"
+            return f"Congratulation, you solved challenge '{chall_name}'"
         else:
             print(f"Invalid submission for {chall_name}")
             return f"Invalid submission for {chall_name}"
     
     else:
-        credentials_json = json_database.read_credentials()
+        credential_object = json_database.get_credential_by_domain(urlparse(challenge_object['url'])[1])
+        
+        with SB(uc=True, demo=True, headless=True) as sb:
+            sb.driver.get(urljoin(challenge_object['url'], 'login'))
+            input_fields_name = []
+            submit_button_css_selector = ''
+            soup = BeautifulSoup(sb.get_page_source(), 'html.parser')
             
-        credential_object = next((credential for credential in credentials_json['credentials'] if credential['domain'] == urlparse(challenge_object['url'])[1]), None)
-        
-        try:
-            with SB(uc=True, demo=True, headless=False) as sb:
-                sb.driver.get(urljoin(challenge_object['url'], 'login'))
-                input_fields_name = []
-                submit_button_css_selector = ''
-                soup = BeautifulSoup(sb.get_page_source(), 'html.parser')
-                
-                for input_field in soup.find_all('input'):
-                    input_fields_name.append(input_field.get('name'))
-                    if input_field.get('type') == 'submit':
-                        submit_button_css_selector = 'input[type=\'submit\']'
-                sb.type(f'input[name=\'{input_fields_name[0]}\']', credential_object['username'])
-                sb.type(f'input[name=\'{input_fields_name[1]}\']', credential_object['password'])
-                
-                for button in soup.find_all('button'):
-                    if button.get('type') == 'submit':
-                        submit_button_css_selector = 'button[type=\'submit\']'
-                
-                sb.click(submit_button_css_selector)
-                sb.uc_open_with_tab(challenge_object['url'])
-                sb.sleep(2)
+            for input_field in soup.find_all('input'):
+                input_fields_name.append(input_field.get('name'))
+                if input_field.get('type') == 'submit':
+                    submit_button_css_selector = 'input[type=\'submit\']'
+            sb.type(f'input[name=\'{input_fields_name[0]}\']', credential_object['username'])
+            sb.type(f'input[name=\'{input_fields_name[1]}\']', credential_object['password'])
+            
+            for button in soup.find_all('button'):
+                if button.get('type') == 'submit':
+                    submit_button_css_selector = 'button[type=\'submit\']'
+            sb.click(submit_button_css_selector)
+            sb.uc_open_with_tab(challenge_object['url'])
 
-                soup = BeautifulSoup(sb.get_page_source(), 'html.parser')
-                for input_field in soup.find_all('input'):
-                    if 'flag' in str(input_field.get('name')).lower() or 'flag' in str(input_field.get('placeholder')).lower():
-                        sb.type(f'input[name=\'{input_field.get("name")}\']', flag)
-                    if input_field.get('type') == 'submit' and ('submit' in str(input_field.get('name')).lower() or 'submit' in str(input_field.text).lower()):
-                        submit_button_css_selector = f'//input[text()=\'{button.get_text()}\']'
-                    if input_field.get('type') == 'button' and ('submit' in str(input_field.get('name')).lower() or 'submit' in str(input_field.text).lower()):
-                        submit_button_css_selector = f'//input[text()=\'{button.get_text()}\']'
+            soup = BeautifulSoup(sb.get_page_source(), 'html.parser')
+            for input_field in soup.find_all('input'):
+                if 'flag' in str(input_field.get('name')).lower() or 'flag' in str(input_field.get('placeholder')).lower():
+                    sb.type(f'input[name=\'{input_field.get("name")}\']', flag)
+                if input_field.get('type') == 'submit' and ('submit' in str(input_field.get('name')).lower() or 'submit' in str(input_field.text).lower()):
+                    submit_button_css_selector = f'//input[text()=\'{button.get_text()}\']'
+                if input_field.get('type') == 'button' and ('submit' in str(input_field.get('name')).lower() or 'submit' in str(input_field.text).lower()):
+                    submit_button_css_selector = f'//input[text()=\'{button.get_text()}\']'
+            
+            for button in soup.find_all('button'):
+                if 'submit' in str(button.get('name')).lower() or 'submit' in str(button.get_text()).lower():
+                    submit_button_css_selector = f'//button[text()=\'{button.get_text()}\']'
+            
+            sb.click(submit_button_css_selector)
+            sb.sleep(2)
+            
+            # Problem with picoCTF is that flag have a random string at the end :(
+            if 'incorrect' in str(sb.get_page_source()).lower():
+                print(f"Invalid submission for {chall_name}")
+                return "Invalid submission, try again"
+            elif 'correct' in str(sb.get_page_source()).lower() and 'incorrect' not in str(sb.get_page_source()).lower():
+                print(sb.get_page_source().text)
+                #TODO test this before commit
+                json_database.update_challenge_flag_by_name(chall_name, flag)
                 
-                for button in soup.find_all('button'):
-                    if 'submit' in str(button.get('name')).lower() or 'submit' in str(button.get_text()).lower():
-                        submit_button_css_selector = f'//button[text()=\'{button.get_text()}\']'
-                
-                sb.click(submit_button_css_selector)
-                sb.sleep(2)
-                
-                # Problem with picoCTF is that flag have a random string at the end :(
-                if 'incorrect' in str(sb.get_page_source()).lower():
-                    print(f"Invalid submission for {chall_name}")
-                    return "Invalid submission, try again"
-                elif 'correct' in str(sb.get_page_source()).lower() and 'incorrect' not in str(sb.get_page_source()).lower():
-                    
-                    #TODO test this before commit
-                    json_database.update_challenge_flag_by_name(chall_name, flag)
-                    
-                    return submit(chall_name, flag)
-        except Exception as e:
-            print(f"Exception in flag_checker.submit(): {repr(e)}")
-            return "An internal error occured"
-        finally:
-            #should quit
-            pass
-        
-        print("Couldn't detect if the flag was correct or incorrect")
-        return "An internal error occured"
+                return submit(chall_name, flag, ctx)
+            else:
+                print("Couldn't detect if the flag was correct or incorrect")
+                return "Couldn't detect if the flag was correct or incorrect"
 
-async def new(args: list[str], guild: discord.Guild, ctx: commands.Contex) -> str:
+async def new(args: list[str], guild: discord.Guild, ctx: commands.Context) -> str:
     if len(args) != 3 and len(args) != 5:
         return 'Wrong number of arguments. Usage: `!new <challenge_name> <challenge_url> <challenge_value>`'
     
     chall_name = args[0]
     chall_url = args[1]
     chall_pts_str = args[2]
+    cred_user = None
+    cred_pass = None
     if len(args) == 5:
         cred_user = args[3]
         cred_pass = args[4]
@@ -130,8 +121,7 @@ async def new(args: list[str], guild: discord.Guild, ctx: commands.Contex) -> st
 
     challenges_json = json_database.read_challenges()
 
-    challenge_names = [challenge['name'] for challenge in challenges_json['challenges']]
-    if challenge_object['name'] not in challenge_names:
+    if challenge_object['name'] not in [challenge['name'] for challenge in challenges_json['challenges']]:
         json_database.append_challenges(challenge_object)
 
         for channel in guild.channels:
@@ -155,4 +145,4 @@ def set_ctf_announcement(channel_name: str, ctx: commands.Context) -> str:
         
     json_database.update_challenges_announcement_channel(channel_name)
     #TODO logging
-    return f"Successfully set {channel_name} as ctf announcement channel"
+    return f"Successfully set '{channel_name}' as ctf announcement channel"
