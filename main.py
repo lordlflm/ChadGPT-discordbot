@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 
 import flag_checker
 import prevent_commands
+import json_database
 
 guild_id = 0
 
@@ -60,4 +61,6 @@ def run_discord_bot():
     bot.run(DISCORD_TOKEN)
 
 if __name__ == '__main__':
+    json_database.init_challenges()
+    json_database.init_credentials()
     run_discord_bot()

@@ -5,6 +5,8 @@ from urllib.parse import urlparse, urljoin
 from bs4 import BeautifulSoup
 from seleniumbase import SB
 
+import json_database
+
 async def submit(args: list[str], guild: discord.Guild, ctx: commands.Context) -> str:
     if len(args) != 2:
         return 'Wrong number of arguments. Usage: `!submit <challenge_name> <flag>`'
@@ -12,14 +14,8 @@ async def submit(args: list[str], guild: discord.Guild, ctx: commands.Context) -
     chall_name = args[0]
     flag = args[1]
     
-    try:
-        with open('./challenges.json', 'r+') as f:
-            challenges_json = json.load(f)
-            f.close()
-    except FileNotFoundError:
-        return "Invalid challenge name"
+    challenge_object = json_database.get_challenge_by_name(chall_name)
 
-    challenge_object = next((challenge for challenge in challenges_json['challenges'] if challenge['name'] == chall_name), None)   
     if not challenge_object:
         return "Invalid challenge name"
 
@@ -28,7 +24,7 @@ async def submit(args: list[str], guild: discord.Guild, ctx: commands.Context) -
             #TODO
             # update leaderboard
             for channel in guild.channels:
-                if channel.name == challenges_json['announcement_channel']:
+                if channel.name == json_database.get_challenges_announcement_channel:
                     await channel.send(f"Congratulation {ctx.author.mention} for solving '{chall_name}!'")
                     break
             print(f"Valid submission for {chall_name}")
@@ -38,9 +34,7 @@ async def submit(args: list[str], guild: discord.Guild, ctx: commands.Context) -
             return f"Invalid submission for {chall_name}"
     
     else:
-        with open('./credentials.json', 'r+') as f:
-            credentials_json = json.load(f)
-            f.close()
+        credentials_json = json_database.read_credentials()
             
         credential_object = next((credential for credential in credentials_json['credentials'] if credential['domain'] == urlparse(challenge_object['url'])[1]), None)
         
@@ -89,14 +83,7 @@ async def submit(args: list[str], guild: discord.Guild, ctx: commands.Context) -
                 elif 'correct' in str(sb.get_page_source()).lower() and 'incorrect' not in str(sb.get_page_source()).lower():
                     
                     #TODO test this before commit
-                    for i, challenge in enumerate(challenges_json['challenges']):
-                        if challenge['name'] == chall_name:
-                            challenge['flag'] = flag
-                            del(challenges_json['challenges'][i])
-                            challenges_json['challenges'].append(challenge)
-                            break
-                    with open('challenges.json', 'w+') as f:
-                        json.dump(challenges_json, f, indent=4)
+                    json_database.update_challenge_flag_by_name(chall_name, flag)
                     
                     return submit(chall_name, flag)
         except Exception as e:
@@ -120,13 +107,7 @@ async def new(args: list[str], guild: discord.Guild, ctx: commands.Contex) -> st
         cred_user = args[3]
         cred_pass = args[4]
         
-    try:
-        with open('credentials.json', 'r+') as f:
-            credentials_json = json.load(f)
-    except FileNotFoundError:
-        credentials_json = {"credentials": []}
-        with open('credentials.json', 'w') as f:
-            json.dump(credentials_json, f, indent=4)
+    credentials_json = json_database.read_credentials()
 
     if urlparse(chall_url).netloc not in [credential['domain'] for credential in credentials_json['credentials']]:
         if not cred_user or not cred_pass:
@@ -138,9 +119,7 @@ async def new(args: list[str], guild: discord.Guild, ctx: commands.Contex) -> st
                 "username": cred_user,
                 "password": cred_pass
             }
-            credentials_json['credentials'].append(credential_object)
-            with open('credentials.json', 'w') as f:
-                json.dump(credentials_json, f, indent=4)
+            json_database.append_credentials(credential_object)
 
     challenge_object = {
         'name': chall_name,
@@ -149,17 +128,12 @@ async def new(args: list[str], guild: discord.Guild, ctx: commands.Contex) -> st
         'points': int(chall_pts_str)
     }
 
-    try:
-        with open('./challenges.json', 'r+') as f:
-            challenges_json = json.load(f)
-    except FileNotFoundError:
-        challenges_json = init_challenges_json()
+    challenges_json = json_database.read_challenges()
 
     challenge_names = [challenge['name'] for challenge in challenges_json['challenges']]
     if challenge_object['name'] not in challenge_names:
-        challenges_json['challenges'].append(challenge_object)
-        with open('./challenges.json', 'w') as f:
-            json.dump(challenges_json, f, indent=4)
+        json_database.append_challenges(challenge_object)
+
         for channel in guild.channels:
             if channel.name == challenges_json['announcement_channel']:
                 await channel.send(f"New challenge available!\n'{chall_name}' for {chall_pts_str} points at {chall_url}\nGood hacking!")
@@ -178,21 +152,7 @@ def set_ctf_announcement(channel_name: str, ctx: commands.Context) -> str:
     if channel_name not in text_channels:
         #TODO logging
         return f"{channel_name} is not a valid text channel"
-    
-    try:
-        with open('./challenges.json', 'r+') as f:
-            challenges_json = json.load(f)
-    except FileNotFoundError:
-        challenges_json = init_challenges_json()
         
-    challenges_json['announcement_channel'] = channel_name
-    with open('./challenges.json', 'w') as f:
-        json.dump(challenges_json, f, indent=4)
+    json_database.update_challenges_announcement_channel(channel_name)
     #TODO logging
     return f"Successfully set {channel_name} as ctf announcement channel"
-
-def init_challenges_json():
-    challenges_json = {'announcement_channel': '', 'challenges': []}
-    with open('./challenges.json', 'w') as f:
-        json.dump(challenges_json, f, indent=4)
-    return challenges_json
