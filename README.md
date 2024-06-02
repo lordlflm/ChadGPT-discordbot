@@ -1,23 +1,13 @@
 # ChadGPT
 ### What am I
-I'm a discord bot that prevents your friends from polluting specific discord channels with bot commands while there's a channel meant for it. :rage:
+I let friends organize and compete in online capture the flag challenges through a discord channel. :triangular_flag_on_post: 
 
-I also have a feature that lets you compete with you friends in capture the flag challenges.
+I also have a feature that prevents your friends from polluting specific discord channels with bot commands while there's a channel meant for it. :rage:
 
-### Run me
-```bash
-pip install virtualenv
-python3 -m venv .venv
+### Commands
+`!set_ctf_channel <channel>`  
+`!set_ctf_mention <mention>` ***TODO***  
+`!new <challenge_name> <challenge_url> <challenge_value>`   
+`!submit <challenge_name> <flag>`   
 
-# on linux
-. venv/bin/activate
-
-# on windows
-.\venv\Scripts\activate
-
-pip install discord
-pip install dotenv
-pip install json
-pip install requests
-pip install urllib # maybe urllib3
-```
+`!restrict_command <restricted_command> <restricted_channel_1> ...`
