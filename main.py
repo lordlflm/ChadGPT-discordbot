@@ -10,7 +10,7 @@ import json_database
 guild_id = 0
 
 def run_discord_bot():
-    load_dotenv()
+    load_dotenv(override=True)
     DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
     intents = discord.Intents.default()
     intents.guilds = True

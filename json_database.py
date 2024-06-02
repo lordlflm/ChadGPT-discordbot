@@ -45,6 +45,17 @@ def update_challenge_flag_by_name(chall_name: str, flag: str):
     with open('challenges.json', 'w+') as f:
         json.dump(challenges_json, f, indent=4)
 
+def increment_challenge_solves_by_name(chall_name):
+    challenges_json = read_challenges()
+    for i, challenge in enumerate(challenges_json['challenges']):
+        if challenge['name'] == chall_name:
+            challenge['solves'] += 1
+            del(challenges_json['challenges'][i])
+            challenges_json['challenges'].append(challenge)
+            break
+    with open('challenges.json', 'w+') as f:
+        json.dump(challenges_json, f, indent=4)
+
 def init_credentials():
     try:
         open('credentials.json').close()

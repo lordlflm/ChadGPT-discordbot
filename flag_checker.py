@@ -24,9 +24,13 @@ async def submit(args: list[str], guild: discord.Guild, ctx: commands.Context) -
             #TODO
             # update leaderboard
             for channel in guild.channels:
-                if channel.name == json_database.get_challenges_announcement_channel:
-                    await channel.send(f"Congratulation {ctx.author.mention} for solving '{chall_name}!'")
+                if channel.name == json_database.get_challenges_announcement_channel():
+                    if json_database.get_challenge_by_name(chall_name)['solves'] != 0:
+                        await channel.send(f"Congratulation to {ctx.author.mention} for solving '{chall_name}!'")
+                    else:
+                        await channel.send(f"First blood on '{chall_name}'! :drop_of_blood: Congratulation to {ctx.author.mention}! :drop_of_blood:")
                     break
+            json_database.increment_challenge_solves_by_name(chall_name)
             print(f"Valid submission for {chall_name}")
             return f"Congratulation, you solved challenge '{chall_name}'"
         else:
@@ -76,11 +80,10 @@ async def submit(args: list[str], guild: discord.Guild, ctx: commands.Context) -
                 print(f"Invalid submission for {chall_name}")
                 return "Invalid submission, try again"
             elif 'correct' in str(sb.get_page_source()).lower() and 'incorrect' not in str(sb.get_page_source()).lower():
-                print(sb.get_page_source().text)
                 #TODO test this before commit
                 json_database.update_challenge_flag_by_name(chall_name, flag)
                 
-                return submit(chall_name, flag, ctx)
+                return await submit([chall_name, flag], guild, ctx)
             else:
                 print("Couldn't detect if the flag was correct or incorrect")
                 return "Couldn't detect if the flag was correct or incorrect"
@@ -116,6 +119,7 @@ async def new(args: list[str], guild: discord.Guild, ctx: commands.Context) -> s
         'name': chall_name,
         'url': chall_url,
         'flag': '',
+        'solves': 0,
         'points': int(chall_pts_str)
     }
 
