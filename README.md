@@ -7,7 +7,7 @@ I also have a feature that prevents your friends from polluting specific discord
 ### Commands
 `!set_ctf_channel <channel>`  
 `!set_ctf_mention <mention>` ***TODO***  
-`!new <challenge_name> <challenge_url> <challenge_value>`   
-`!submit <challenge_name> <flag>`   
+`!new <challenge_name> <challenge_url> <challenge_value>` (private command only)   
+`!submit <challenge_name> <flag>` (private command only) 
 
 `!restrict_command <restricted_command> <restricted_channel_1> ...`
