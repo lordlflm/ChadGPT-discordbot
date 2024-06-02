@@ -63,4 +63,5 @@ def run_discord_bot():
 if __name__ == '__main__':
     json_database.init_challenges()
     json_database.init_credentials()
+    json_database.init_users()
     run_discord_bot()

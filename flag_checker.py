@@ -22,7 +22,7 @@ async def submit(args: list[str], guild: discord.Guild, ctx: commands.Context) -
     if challenge_object['flag'] != "":
         if challenge_object['flag'] == flag:
             #TODO
-            # update leaderboard
+            json_database.update_user_points_by_name(ctx.author.name, challenge_object)
             for channel in guild.channels:
                 if channel.name == json_database.get_challenges_announcement_channel():
                     if json_database.get_challenge_by_name(chall_name)['solves'] != 0:

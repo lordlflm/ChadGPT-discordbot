@@ -45,7 +45,7 @@ def update_challenge_flag_by_name(chall_name: str, flag: str):
     with open('challenges.json', 'w+') as f:
         json.dump(challenges_json, f, indent=4)
 
-def increment_challenge_solves_by_name(chall_name):
+def increment_challenge_solves_by_name(chall_name: str):
     challenges_json = read_challenges()
     for i, challenge in enumerate(challenges_json['challenges']):
         if challenge['name'] == chall_name:
@@ -73,17 +73,44 @@ def read_credentials():
         credentials_json = json.load(f)
     return credentials_json
 
-def append_credentials(credential_object):
+def append_credentials(credential_object: str):
     credentials_json = read_credentials()
     credentials_json['credentials'].append(credential_object)
     with open('credentials.json', 'w') as f:
         json.dump(credentials_json, f, indent=4)
 
-def init_leaderboard():
-    pass
+def init_users():
+    try:
+        open('users.json').close()
+    except FileNotFoundError:
+        users_json = {"users": []}
+        with open('users.json', 'w') as f:
+            json.dump(users_json, f, indent=4)
+            
+def update_user_points_by_name(user_name: str, chall: dict):
+    users_json = read_users()
+    updated = False
+    for i, user in enumerate(users_json['users']):
+        if user['name'] == user_name:
+            updated = True  
+            if chall['name'] not in user['solved']:
+                user['points'] += chall['points']
+                user['solved'].append(chall['name'])
+                del(users_json['users'][i])
+                users_json['users'].append(user)
+                break
+            else:
+                print('You snoro')
+    if not updated:
+        user = {'name': user_name, 'points': chall['points'], 'solved': [chall['name']]}
+        users_json['users'].append(user)
+    with open('users.json', 'w+') as f:
+        json.dump(users_json, f, indent=4)
 
-def read_leaderboard():
-    pass
+def read_users():
+    with open('users.json', 'r+') as f:
+        users_json = json.load(f)
+    return users_json
 
 def write_leaderboard():
     pass
