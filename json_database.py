@@ -93,19 +93,22 @@ def update_user_points_by_name(user_name: str, chall: dict):
     for i, user in enumerate(users_json['users']):
         if user['name'] == user_name:
             updated = True  
-            if chall['name'] not in user['solved']:
-                user['points'] += chall['points']
-                user['solved'].append(chall['name'])
-                del(users_json['users'][i])
-                users_json['users'].append(user)
-                break
-            else:
-                print('You snoro')
+            user['points'] += chall['points']
+            user['solved'].append(chall['name'])
+            del(users_json['users'][i])
+            users_json['users'].append(user)
+            break
     if not updated:
         user = {'name': user_name, 'points': chall['points'], 'solved': [chall['name']]}
         users_json['users'].append(user)
     with open('users.json', 'w+') as f:
         json.dump(users_json, f, indent=4)
+        
+def get_user_solved_by_name(user_name: str):
+    with open('users.json', 'r+') as f:
+        users_json = json.load(f)
+        user = next((user for user in users_json['users'] if user['name'] == user_name), None)
+        return user['solved']
 
 def read_users():
     with open('users.json', 'r+') as f:
