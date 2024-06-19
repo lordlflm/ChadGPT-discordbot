@@ -49,7 +49,7 @@ async def submit(args: list[str], guild: discord.Guild, ctx: commands.Context) -
     else:
         credential_object = json_database.get_credential_by_domain(urlparse(challenge_object['url'])[1])
         
-        with SB(uc=True, demo=True, headless=False) as sb:
+        with SB(uc=True, demo=True, headless=True) as sb:
             challenge_plateform_submit_login(sb, challenge_object, credential_object)
             sb.uc_open_with_tab(challenge_object['url'])
 
