@@ -20,7 +20,34 @@ async def submit(args: list[str], guild: discord.Guild, ctx: commands.Context) -
         return "Invalid challenge name"
 
     if challenge_object['flag'] != "":
-        if challenge_object['flag'] == flag:
+        return await compare_flag(challenge_object, flag, guild, ctx)
+    
+    else:
+        credential_object = json_database.get_credential_by_domain(urlparse(challenge_object['url'])[1])
+        
+        with SB(uc=True, demo=True, headless=False) as sb:
+            challenge_plateform_submit_login(sb, challenge_object, credential_object)
+            sb.uc_open_with_tab(challenge_object['url'])
+
+            challenge_plateform_submit_flag(sb, flag)
+            sb.sleep(2)
+            
+            if 'incorrect' in str(sb.get_page_source()).lower():
+                print(f"Invalid submission for {chall_name}")
+                return "Invalid submission, try again"
+            elif 'correct' in str(sb.get_page_source()).lower() and 'incorrect' not in str(sb.get_page_source()).lower():
+                #TODO test this before commit
+                json_database.update_challenge_flag_by_name(chall_name, flag)
+                
+                return await submit([chall_name, flag], guild, ctx)
+            else:
+                print("Couldn't detect if the flag was correct or incorrect")
+                return "Couldn't detect if the flag was correct or incorrect"
+
+async def compare_flag(challenge_object: dict, flag: str, guild: discord.Guild, ctx: commands.Context) -> str:
+    chall_name = challenge_object['name']
+    
+    if challenge_object['flag'] == flag:
             if chall_name in json_database.get_user_solved_by_name(ctx.author.name):
                 return f"You have already solved '{chall_name}'"
             
@@ -35,60 +62,46 @@ async def submit(args: list[str], guild: discord.Guild, ctx: commands.Context) -
             json_database.increment_challenge_solves_by_name(chall_name)
             print(f"Valid submission for {chall_name}")
             return f"Congratulation, you solved challenge '{chall_name}'"
-        else:
-            print(f"Invalid submission for {chall_name}")
-            return f"Invalid submission for {chall_name}"
-    
     else:
-        credential_object = json_database.get_credential_by_domain(urlparse(challenge_object['url'])[1])
-        
-        with SB(uc=True, demo=True, headless=True) as sb:
-            sb.driver.get(urljoin(challenge_object['url'], 'login'))
-            input_fields_name = []
-            submit_button_css_selector = ''
-            soup = BeautifulSoup(sb.get_page_source(), 'html.parser')
-            
-            for input_field in soup.find_all('input'):
-                input_fields_name.append(input_field.get('name'))
-                if input_field.get('type') == 'submit':
-                    submit_button_css_selector = 'input[type=\'submit\']'
-            sb.type(f'input[name=\'{input_fields_name[0]}\']', credential_object['username'])
-            sb.type(f'input[name=\'{input_fields_name[1]}\']', credential_object['password'])
-            
-            for button in soup.find_all('button'):
-                if button.get('type') == 'submit':
-                    submit_button_css_selector = 'button[type=\'submit\']'
-            sb.click(submit_button_css_selector)
-            sb.uc_open_with_tab(challenge_object['url'])
+        print(f"Invalid submission for {chall_name}")
+        return f"Invalid submission for {chall_name}"
 
-            soup = BeautifulSoup(sb.get_page_source(), 'html.parser')
-            for input_field in soup.find_all('input'):
-                if 'flag' in str(input_field.get('name')).lower() or 'flag' in str(input_field.get('placeholder')).lower():
-                    sb.type(f'input[name=\'{input_field.get("name")}\']', flag)
-                if input_field.get('type') == 'submit' and ('submit' in str(input_field.get('name')).lower() or 'submit' in str(input_field.text).lower()):
-                    submit_button_css_selector = f'//input[text()=\'{button.get_text()}\']'
-                if input_field.get('type') == 'button' and ('submit' in str(input_field.get('name')).lower() or 'submit' in str(input_field.text).lower()):
-                    submit_button_css_selector = f'//input[text()=\'{button.get_text()}\']'
+#TODO some plateform wont need a login
+def challenge_plateform_submit_login(sb: SB, challenge_object: dict, credential_object: dict):
+    sb.driver.get(urljoin(challenge_object['url'], 'login'))
+    input_fields_name = []
+    submit_button_css_selector = ''
+    soup = BeautifulSoup(sb.get_page_source(), 'html.parser')
+    
+    for input_field in soup.find_all('input'):
+        input_fields_name.append(input_field.get('name'))
+        if input_field.get('type') == 'submit':
+            submit_button_css_selector = 'input[type=\'submit\']'
+    sb.type(f'input[name=\'{input_fields_name[0]}\']', credential_object['username'])
+    sb.type(f'input[name=\'{input_fields_name[1]}\']', credential_object['password'])
+    
+    for button in soup.find_all('button'):
+        if button.get('type') == 'submit':
+            submit_button_css_selector = 'button[type=\'submit\']'
             
-            for button in soup.find_all('button'):
-                if 'submit' in str(button.get('name')).lower() or 'submit' in str(button.get_text()).lower():
-                    submit_button_css_selector = f'//button[text()=\'{button.get_text()}\']'
-            
-            sb.click(submit_button_css_selector)
-            sb.sleep(2)
-            
-            # Problem with picoCTF is that flag have a random string at the end :(
-            if 'incorrect' in str(sb.get_page_source()).lower():
-                print(f"Invalid submission for {chall_name}")
-                return "Invalid submission, try again"
-            elif 'correct' in str(sb.get_page_source()).lower() and 'incorrect' not in str(sb.get_page_source()).lower():
-                #TODO test this before commit
-                json_database.update_challenge_flag_by_name(chall_name, flag)
-                
-                return await submit([chall_name, flag], guild, ctx)
-            else:
-                print("Couldn't detect if the flag was correct or incorrect")
-                return "Couldn't detect if the flag was correct or incorrect"
+    sb.click(submit_button_css_selector)
+
+#TODO this wont work for every plateform
+def challenge_plateform_submit_flag(sb: SB, flag: str):
+    soup = BeautifulSoup(sb.get_page_source(), 'html.parser')
+    for input_field in soup.find_all('input'):
+        if 'flag' in str(input_field.get('name')).lower() or 'flag' in str(input_field.get('placeholder')).lower():
+            sb.type(f'input[name=\'{input_field.get("name")}\']', flag)
+        if input_field.get('type') == 'submit' and ('submit' in str(input_field.get('name')).lower() or 'submit' in str(input_field.text).lower()):
+            submit_button_css_selector = f'//input[text()=\'{button.get_text()}\']'
+        if input_field.get('type') == 'button' and ('submit' in str(input_field.get('name')).lower() or 'submit' in str(input_field.text).lower()):
+            submit_button_css_selector = f'//input[text()=\'{button.get_text()}\']'
+    
+    for button in soup.find_all('button'):
+        if 'submit' in str(button.get('name')).lower() or 'submit' in str(button.get_text()).lower():
+            submit_button_css_selector = f'//button[text()=\'{button.get_text()}\']'
+    
+    sb.click(submit_button_css_selector)
 
 async def new(args: list[str], guild: discord.Guild, ctx: commands.Context) -> str:
     if len(args) != 3 and len(args) != 5:
