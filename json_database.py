@@ -4,7 +4,7 @@ def init_challenges():
     try:
         open('challenges.json').close()
     except FileNotFoundError:
-        challenges_json = {'announcement_channel': '', 'challenges': []}
+        challenges_json = {'announcement_channel': '','mention': '', 'challenges': []}
         with open('challenges.json', 'w') as f:
             json.dump(challenges_json, f, indent=4)
 
@@ -25,6 +25,12 @@ def get_challenges_announcement_channel() -> str:
 def update_challenges_announcement_channel(channel_name: str):
     challenges_json = read_challenges()
     challenges_json['announcement_channel'] = channel_name
+    with open('challenges.json', 'w') as f:
+        json.dump(challenges_json, f, indent=4)
+        
+def update_challenges_mention(mention_name: str):
+    challenges_json = read_challenges()
+    challenges_json['mention'] = mention_name
     with open('challenges.json', 'w') as f:
         json.dump(challenges_json, f, indent=4)
 

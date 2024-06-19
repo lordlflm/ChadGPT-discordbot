@@ -26,6 +26,8 @@ def leaderboard(args: list[str]) -> str:
         elif i+1 == 3:
             board += '  :third_place:'
     board += '\n--------------'
+    
+    #TODO logging
     return board
         
 
@@ -173,15 +175,36 @@ async def new(args: list[str], guild: discord.Guild, ctx: commands.Context) -> s
         #TODO logging
         return "A challenge with the same name already exists."
     
-def set_ctf_announcement(channel_name: str, ctx: commands.Context) -> str:
+def set_ctf_announcement(args: list[str], guild: discord.Guild) -> str:
+    if len(args) < 1:
+        #TODO logging
+        return 'Wrong number of arguments. Usage: `!set_ctf_channel <channel_name>`'
+    channel_name = args[0]
+    
     text_channels = []
-    for channel in ctx.guild.channels:
+    for channel in guild.channels:
         if isinstance(channel, discord.TextChannel):
             text_channels.append(channel.name)
     if channel_name not in text_channels:
         #TODO logging
-        return f"{channel_name} is not a valid text channel"
+        return f"'{channel_name}' is not a valid text channel"
         
     json_database.update_challenges_announcement_channel(channel_name)
     #TODO logging
     return f"Successfully set '{channel_name}' as ctf announcement channel"
+
+def set_ctf_mention(args: list[str], guild: discord.Guild) -> str:
+    if len(args) < 1:
+        #TODO logging
+        return 'Wrong number of arguments. Usage: `!set_ctf_mention <mention_name>`'
+    mention_name = args[0]
+    
+    roles = []
+    for role in guild.roles:
+        roles.append(role.name)
+    if mention_name not in roles:
+        return f"'{mention_name}' is not a valid role"
+    
+    json_database.update_challenges_mention(mention_name)
+    #TODO logging
+    return f"Successfully set '{mention_name}' as role to be mentionned for ctf updates"

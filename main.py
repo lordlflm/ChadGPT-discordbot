@@ -51,12 +51,12 @@ def run_discord_bot():
         await ctx.send(await flag_checker.submit(args, bot.guilds[0], ctx))
 
     @bot.command()
-    async def set_ctf_channel(ctx, channel_name):
-        if not ctx.guild:
-            #TODO logging
-            await ctx.send('This command must not be called in a private channel')
-        else:
-            await ctx.send(flag_checker.set_ctf_announcement(channel_name, ctx))
+    async def set_ctf_channel(ctx, *args):
+        await ctx.send(flag_checker.set_ctf_announcement(args, bot.guilds[0]))
+            
+    @bot.command()
+    async def set_ctf_mention(ctx, *args):
+        await ctx.send(flag_checker.set_ctf_mention(args, bot.guilds[0]))
             
     @bot.command()
     async def leaderboard(ctx, *args):
