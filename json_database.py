@@ -33,6 +33,10 @@ def update_challenges_mention(mention_name: str):
     challenges_json['mention'] = mention_name
     with open('challenges.json', 'w') as f:
         json.dump(challenges_json, f, indent=4)
+        
+def get_challenges_mention() -> str:
+    challenges_json = read_challenges()
+    return challenges_json['mention']
 
 def append_challenges(challenge_object):
     challenges_json = read_challenges()

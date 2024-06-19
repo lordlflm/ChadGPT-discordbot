@@ -167,7 +167,11 @@ async def new(args: list[str], guild: discord.Guild, ctx: commands.Context) -> s
 
         for channel in guild.channels:
             if channel.name == challenges_json['announcement_channel']:
-                await channel.send(f"New challenge available!\n'{chall_name}' for {chall_pts_str} points at {chall_url}\nGood hacking!")
+                mention = json_database.get_challenges_mention()
+                for role in guild.roles:
+                    if role.name == mention:
+                        mention = role.mention
+                await channel.send(f"{mention}! New challenge available!\n'{chall_name}' for {chall_pts_str} points at {chall_url}\nGood hacking!")
                 break
         #TODO logging
         return f"Successfully added '{challenge_object.get('name')}' challenge"
