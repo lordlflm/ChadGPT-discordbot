@@ -6,9 +6,14 @@ I also have a feature that prevents your friends from polluting specific discord
 
 ### Commands
 `!set_ctf_channel <channel>`  
-`!set_ctf_mention <mention>` ***TODO***  
+`!set_ctf_mention <mention>`   
 `!new <challenge_name> <challenge_url> <challenge_value>` (private command only)   
 `!submit <challenge_name> <flag>` (private command only)  
 `!leaderboard <leaderboard_length>`
 
 `!restrict_command <restricted_command> <restricted_channel_1> ...`
+
+### Usage notes
+- The bot must have a fresh account on the ctf plateform.
+- Note that the bot can't verify picoCTF since some/all flags have a random bit.
+- Note that the bot has been tested on https://ctf.hackin.ca/. Any other plateform might produce buggy behaviour. Help would be appreciated here for testing.
