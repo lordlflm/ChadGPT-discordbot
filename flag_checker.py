@@ -1,4 +1,3 @@
-import json
 import discord
 from discord.ext import commands
 from urllib.parse import urlparse, urljoin
@@ -6,6 +5,29 @@ from bs4 import BeautifulSoup
 from seleniumbase import SB
 
 import json_database
+
+def leaderboard(args: list[str]) -> str:
+    board_len = 5
+    if len(args) > 0:
+        board_len = int(args[0])
+        if board_len == 0:
+            board_len = 5
+    
+    users_json = json_database.read_users()
+    board_dict = sorted(users_json['users'], key=lambda user: user['points'], reverse=True)[:board_len]
+    
+    board = '**Leaderboard**\n--------------'
+    for i, user in enumerate(board_dict):
+        board += f"\n{i+1}. {user['name']}"
+        if i+1 == 1:
+            board += '  :first_place:'
+        elif i+1 == 2:
+            board += '  :second_place:'
+        elif i+1 == 3:
+            board += '  :third_place:'
+    board += '\n--------------'
+    return board
+        
 
 async def submit(args: list[str], guild: discord.Guild, ctx: commands.Context) -> str:
     if len(args) != 2:
@@ -36,13 +58,11 @@ async def submit(args: list[str], guild: discord.Guild, ctx: commands.Context) -
                 print(f"Invalid submission for {chall_name}")
                 return "Invalid submission, try again"
             elif 'correct' in str(sb.get_page_source()).lower() and 'incorrect' not in str(sb.get_page_source()).lower():
-                #TODO test this before commit
                 json_database.update_challenge_flag_by_name(chall_name, flag)
-                
                 return await submit([chall_name, flag], guild, ctx)
             else:
                 print("Couldn't detect if the flag was correct or incorrect")
-                return "Couldn't detect if the flag was correct or incorrect"
+                return "Couldn't detect if the flag was correct or incorrect. Check with admin to get your points"
 
 async def compare_flag(challenge_object: dict, flag: str, guild: discord.Guild, ctx: commands.Context) -> str:
     chall_name = challenge_object['name']

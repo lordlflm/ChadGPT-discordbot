@@ -58,6 +58,10 @@ def run_discord_bot():
         else:
             await ctx.send(flag_checker.set_ctf_announcement(channel_name, ctx))
             
+    @bot.command()
+    async def leaderboard(ctx, *args):
+        await ctx.send(flag_checker.leaderboard(args))
+            
     bot.run(DISCORD_TOKEN)
 
 if __name__ == '__main__':

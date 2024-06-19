@@ -8,17 +8,17 @@ def init_challenges():
         with open('challenges.json', 'w') as f:
             json.dump(challenges_json, f, indent=4)
 
-def read_challenges():
+def read_challenges() -> dict:
     with open('challenges.json', 'r+') as f:
         challenges_json = json.load(f)
     return challenges_json
 
-def get_challenge_by_name(chall_name: str):
+def get_challenge_by_name(chall_name: str) -> dict:
     challenges_json = read_challenges()
     challenge_object = next((challenge for challenge in challenges_json['challenges'] if challenge['name'] == chall_name), None)
     return challenge_object
 
-def get_challenges_announcement_channel():
+def get_challenges_announcement_channel() -> str:
     challenges_json = read_challenges()
     return challenges_json['announcement_channel']
 
@@ -64,11 +64,11 @@ def init_credentials():
         with open('credentials.json', 'w') as f:
             json.dump(credentials_json, f, indent=4)
 
-def get_credential_by_domain(domain_name: str):
+def get_credential_by_domain(domain_name: str) -> dict:
     credentials_json = read_credentials()        
     return next((credential for credential in credentials_json['credentials'] if credential['domain'] == domain_name), None)
 
-def read_credentials():
+def read_credentials() -> dict:
     with open('credentials.json', 'r+') as f:
         credentials_json = json.load(f)
     return credentials_json
@@ -104,16 +104,13 @@ def update_user_points_by_name(user_name: str, chall: dict):
     with open('users.json', 'w+') as f:
         json.dump(users_json, f, indent=4)
         
-def get_user_solved_by_name(user_name: str):
+def get_user_solved_by_name(user_name: str) -> list[str]:
     with open('users.json', 'r+') as f:
         users_json = json.load(f)
         user = next((user for user in users_json['users'] if user['name'] == user_name), None)
         return user['solved']
 
-def read_users():
+def read_users() -> dict:
     with open('users.json', 'r+') as f:
         users_json = json.load(f)
     return users_json
-
-def write_leaderboard():
-    pass
