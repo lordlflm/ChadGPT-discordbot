@@ -1,0 +1,4 @@
+discord
+bs4
+seleniumbase
+python-dotenv
