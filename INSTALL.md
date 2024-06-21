@@ -1,3 +1,4 @@
+## Testing
 ```bash
 # setup discord api
 echo 'DISCORD_TOKEN=YOUR_DISCORD_TOKEN' > .env
@@ -17,3 +18,7 @@ pip3 install python-dotenv
 sudo dpkg -i PATH/TO/google-chrome-stable_current_amd64.deb
 # seleniumbase installs chromedriver for you
 ```
+
+## Deploying
+docker build -t chadgpt .
+docker run -t chadgpt
