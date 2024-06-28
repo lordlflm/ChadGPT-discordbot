@@ -21,6 +21,10 @@ sudo dpkg -i PATH/TO/google-chrome-stable_current_amd64.deb
 
 ## Deploying
 ```bash
+echo 'DISCORD_TOKEN=YOUR_DISCORD_TOKEN' > .env
 docker build -t chadgpt .  
 docker run -t chadgpt
+
+# get a shell
+docker exec -it container_name /bin/bash
 ```
