@@ -1,4 +1,5 @@
 import json
+import logging
 
 def init_challenges():
     try:
