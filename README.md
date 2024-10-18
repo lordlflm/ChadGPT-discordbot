@@ -17,3 +17,6 @@ I also have a feature that prevents your friends from polluting specific discord
 - The bot must have a fresh account on the ctf plateform.
 - Note that the bot can't verify picoCTF since some/all flags have a random bit.
 - Note that the bot has been tested on https://ctf.hackin.ca/. Any other plateform might produce buggy behaviour. Help would be appreciated here for testing.
+
+### Problem encountered
+The bot was meant to be run on a Raspberry Pi which has the ARM processor architecture. Since no undetected chrome driver exist for ARM architecture, I'm archiving the project.
